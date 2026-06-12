@@ -1,103 +1,230 @@
-# Instrucciones para Replit AI: Discord Bot Designer (Reconstrucción Avanzada)
+# Instrucciones para Replit AI: Discord Bot Designer (Guía Definitiva de Reconstrucción y Despliegue)
 
-Este documento proporciona una guía técnica detallada para Replit AI, con el objetivo de reconstruir, comprender y optimizar el proyecto "Bot Designer For Discord". La meta es asegurar que la aplicación funcione de manera óptima, que los bots creados sean persistentes y que el sistema sea compatible con los principios de F-Droid, incorporando las mejores prácticas de desarrollo y seguridad.
+Este documento es la guía técnica definitiva para Replit AI, diseñada para la reconstrucción, optimización y despliegue del proyecto "Bot Designer For Discord". El objetivo es transformar el concepto de una aplicación móvil de diseño de bots en un sistema robusto y persistente, compatible con F-Droid y con capacidades avanzadas, asegurando que los bots creados estén "activos de por vida" y sean altamente configurables.
 
-## 1. Naturaleza del Proyecto y Rol de Replit AI
+## 1. Comprensión Profunda del Proyecto y el Rol de Replit AI
 
-El archivo ZIP proporcionado (`com.jakubtomana.discordbotdesinger.zip`) contiene una **aplicación móvil Flutter para Android** cuyo propósito es **diseñar y configurar bots de Discord sin código**. Es crucial entender que Replit AI no debe intentar ejecutar la aplicación Android directamente. En cambio, su tarea principal es:
+El archivo ZIP (`com.jakubtomana.discordbotdesinger.zip`) contiene una **aplicación móvil Flutter para Android**. Es fundamental entender que esta aplicación es un **entorno de diseño y configuración de bots**, no el bot de Discord en sí mismo. La lógica del bot, es decir, cómo responde a comandos y eventos, se define *a través* de esta aplicación. Por lo tanto, el rol de Replit AI se desglosa en:
 
-1.  **Extraer la Lógica del Bot:** Identificar y aislar la lógica o las configuraciones que la aplicación Android genera para un bot de Discord.
-2.  **Alojar el Bot:** Desplegar esta lógica o configuración en un entorno de servidor en Replit, asegurando que el bot resultante esté activo 24/7.
-3.  **Mantener la Persistencia:** Implementar mecanismos para que el bot recuerde sus configuraciones y estados, incluso después de reinicios.
+1.  **Análisis de la Salida de la Aplicación Móvil:** Determinar cómo la aplicación móvil serializa la configuración de un bot (ej. a un archivo JSON, YAML, o un formato propietario). Aunque no tenemos el código fuente de Flutter directamente, la aplicación debe generar algún tipo de artefacto que defina el bot.
+2.  **Desarrollo del "Bot Runner" en Replit:** Crear un servicio en Replit (el "Bot Runner") que pueda interpretar esta configuración generada por la aplicación móvil y ejecutar el bot de Discord en consecuencia.
+3.  **Alojamiento Persistente:** Implementar una infraestructura que garantice la ejecución 24/7 del "Bot Runner".
+4.  **Automatización de Builds para F-Droid:** Establecer un pipeline de CI/CD para la aplicación móvil que genere APKs compatibles con F-Droid.
+5.  **Extensibilidad:** Considerar un sistema de plugins para el "Bot Runner".
 
-## 2. Arquitectura del Bot y Compatibilidad con F-Droid
+## 2. Arquitectura del Sistema: Separación de la Lógica del Bot
 
-Dado que la aplicación original es un "diseñador" de bots, la lógica del bot en sí misma es probable que sea un conjunto de reglas, comandos y eventos que la aplicación móvil construye. Para Replit AI, esto implica:
+La clave para este proyecto es la **separación clara entre la interfaz de usuario (la aplicación Flutter) y la lógica de ejecución del bot (el "Bot Runner")**. La aplicación Flutter es el *front-end* para el diseño, mientras que el "Bot Runner" es el *back-end* que ejecuta el bot real.
 
-*   **Separación de Componentes:** La aplicación Android (interfaz de usuario) y el bot de Discord (lógica de servidor) son entidades separadas. La aplicación Android probablemente genera un archivo de configuración (JSON, YAML, o un formato propietario) que describe el comportamiento del bot.
-*   **F-Droid y Código Abierto:** Para ser compatible con F-Droid, la solución de alojamiento del bot en Replit debe priorizar el software de código abierto y minimizar las dependencias de servicios propietarios de Google (como Firebase o AdMob, que se observaron en el `AndroidManifest.xml` original). Replit AI debe buscar alternativas FOSS (Free and Open Source Software) para cualquier funcionalidad de backend si la lógica del bot lo requiere.
+### 2.1. Extracción Conceptual de la Lógica del Bot
 
-### 2.1. Base de Datos Offline para Configuraciones de Bots
+Dado que el proyecto original es una aplicación Android compilada, la "lógica del bot" no es directamente accesible como código fuente de Discord. En cambio, la aplicación móvil probablemente:
 
-La aplicación móvil necesita una base de datos offline para almacenar las configuraciones de los bots creados por el usuario. Para una aplicación Flutter, las opciones recomendadas son:
+*   **Genera un Archivo de Configuración:** Al "guardar" o "exportar" un bot, la aplicación crea un archivo (ej. `bot_config.json`) que contiene la definición de comandos, eventos, respuestas, etc.
+*   **Se Comunica con un Backend:** Alternativamente, la aplicación podría enviar esta configuración a un backend (que Replit AI tendría que emular o construir) que luego la pasa al "Bot Runner".
 
-*   **`sqflite` (SQLite):** Una base de datos relacional robusta, ideal para datos estructurados y consultas complejas. Es una opción madura y bien soportada en Flutter.
-*   **`Hive`:** Una base de datos NoSQL ligera y extremadamente rápida, perfecta para almacenar objetos Dart directamente. Es excelente para datos no relacionales y de alto rendimiento.
-*   **`Isar`:** Otra base de datos NoSQL de alto rendimiento, diseñada específicamente para Flutter, que ofrece reactividad y facilidad de uso.
+**Acción para Replit AI:**
+1.  **Hipótesis de Formato de Configuración:** Asumir que la aplicación genera un archivo JSON o YAML con la estructura de los comandos y eventos del bot. Replit AI deberá definir un esquema JSON/YAML para esta configuración.
+2.  **Creación del "Bot Runner" (Ejemplo Python):** Desarrollar un script Python (usando `discord.py`) o Node.js (usando `discord.js`) que lea este archivo de configuración y use la API de Discord para inicializar y ejecutar el bot. Este script será el corazón del "Bot Runner".
 
-**Acción para Replit AI:** Al analizar el código fuente de Flutter, Replit AI debe identificar qué base de datos local se está utilizando (si alguna) o, en su ausencia, recomendar la integración de una de estas soluciones para almacenar las configuraciones del bot en el dispositivo móvil. La persistencia de la configuración del bot en el lado del servidor (Replit) se discutirá en la siguiente sección.
+```python
+# Ejemplo conceptual de bot_runner.py
+import discord
+import json
+import os
 
-## 3. Persistencia Extrema del Bot en Replit (24/7)
+# Cargar el token de Discord de forma segura
+TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 
-Lograr que un bot de Discord se ejecute 24/7 en Replit, especialmente en niveles de servicio gratuitos o de bajo costo, requiere estrategias específicas para evitar que el "repl" entre en suspensión. La investigación ha revelado varias técnicas [1] [2]:
+# Cargar la configuración del bot (asumiendo que la app Flutter la genera)
+with open('bot_config.json', 'r') as f:
+    config = json.load(f)
 
-### 3.1. Replit "Always On" (Planes Pagos)
+intents = discord.Intents.default()
+intents.message_content = True # Habilitar si el bot necesita leer el contenido de los mensajes
 
-*   **Descripción:** La característica "Always On" de Replit mantiene un "repl" en ejecución continua, incluso si no hay actividad de usuario. Es la solución más directa para la persistencia. [1]
-*   **Limitaciones:** Los "repls" con "Always On" pueden reiniciarse ocasionalmente debido a migraciones de servidores físicos. Los cambios en el sistema de archivos no persisten entre reinicios; por lo tanto, cualquier dato persistente debe almacenarse en una base de datos externa o en la [Replit Database](https://docs.repl.it/misc/database). [1]
-*   **Acción para Replit AI:** Si el usuario tiene un plan Replit que incluye "Always On", Replit AI debe activarlo para el "repl" que aloja el bot. Además, debe asegurarse de que cualquier dato crítico del bot se almacene en la Replit Database o en una base de datos externa.
+client = discord.Client(intents=intents)
 
-### 3.2. Monitoreo Externo (Uptime Robot)
+@client.event
+async def on_ready():
+    print(f'Bot conectado como {client.user}')
+    # Aquí se podría implementar la lógica para registrar comandos dinámicamente
 
-*   **Descripción:** Para planes gratuitos o cuando "Always On" no es suficiente, se puede usar un servicio de monitoreo externo como Uptime Robot. Este servicio envía solicitudes HTTP periódicas al "repl" del bot, manteniéndolo activo y evitando que Replit lo suspenda por inactividad. [2]
-*   **Implementación:**
-    1.  El bot alojado en Replit debe exponer un endpoint HTTP simple (por ejemplo, una ruta `/ping` o `/health`) que responda a las solicitudes.
-    2.  Configurar Uptime Robot (o un servicio similar) para que envíe solicitudes HTTP a este endpoint cada pocos minutos.
-*   **Acción para Replit AI:** Implementar un pequeño servidor web (por ejemplo, con `Flask` en Python o `Express` en Node.js) dentro del "repl" del bot que exponga un endpoint de "keep-alive". Proporcionar instrucciones claras sobre cómo configurar Uptime Robot para monitorear este endpoint.
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
 
-### 3.3. Optimización de Recursos y Código
+    # Lógica de comandos basada en la configuración cargada
+    for command_name, command_details in config.get('commands', {}).items():
+        if message.content.startswith(f"!{command_name}"):
+            await message.channel.send(command_details.get('response', 'Comando no configurado.'))
+            return
 
-*   **Descripción:** Un bot eficiente consume menos recursos, lo que reduce la probabilidad de ser suspendido por Replit debido a un uso excesivo o inactividad. [3]
+client.run(TOKEN)
+```
+
+### 2.2. Base de Datos Offline en la Aplicación Móvil (F-Droid)
+
+Para la aplicación Flutter, la persistencia offline de las configuraciones de los bots es crucial para F-Droid. La investigación sugiere que las bases de datos locales son la mejor opción:
+
+*   **`sqflite` (SQLite):** Para datos estructurados y complejos. Es la opción más robusta para almacenar configuraciones detalladas de bots.
+*   **`Hive` o `Isar`:** Para datos no relacionales, ofrecen un rendimiento excelente y son fáciles de integrar en Flutter.
+
+**Acción para Replit AI:** Al analizar el código Flutter (si se pudiera descompilar o si se tuviera acceso al código fuente), identificar la implementación de la base de datos. Si no existe, Replit AI debería documentar la necesidad de integrar `sqflite` para almacenar las configuraciones de los bots en el dispositivo móvil. Estas configuraciones serían luego exportadas o sincronizadas con el "Bot Runner".
+
+## 3. Persistencia Extrema del "Bot Runner" en Replit (24/7/365)
+
+Para garantizar que el "Bot Runner" esté siempre activo, se deben combinar varias estrategias, priorizando la estabilidad y la resiliencia.
+
+### 3.1. Replit "Always On" y Replit Database [1]
+
+*   **Descripción:** La función "Always On" es la base. Sin embargo, los "repls" pueden reiniciarse. La [Replit Database](https://docs.repl.it/misc/database) es una base de datos clave-valor persistente que sobrevive a los reinicios del "repl".
 *   **Acción para Replit AI:**
-    *   **Lenguaje y Librerías:** Si la lógica del bot se extrae, preferir lenguajes y librerías ligeras. Python con `discord.py` o Node.js con `discord.js` son opciones comunes y eficientes.
-    *   **Manejo de Eventos:** Optimizar el manejo de eventos de Discord para procesar solo lo necesario.
-    *   **Conexiones a Bases de Datos:** Utilizar conexiones a bases de datos de manera eficiente, cerrándolas cuando no se usan y reutilizando conexiones cuando sea posible.
+    1.  **Activación de "Always On":** Si el plan del usuario lo permite, activar "Always On" para el "repl" del "Bot Runner".
+    2.  **Uso de Replit Database:** Todas las configuraciones dinámicas del bot (comandos, eventos, estados) deben almacenarse en la Replit Database. Esto asegura que, incluso si el "repl" se reinicia, el bot cargará su estado y configuración más recientes.
 
-## 4. Automatización de Comandos y Posible Integración de AI
+### 3.2. Monitoreo Activo y "Keep-Alive" Externo (Uptime Robot) [2]
 
-La capacidad de configurar comandos automáticamente desde la aplicación móvil y que el bot los ejecute requiere un sistema de comandos dinámico.
+*   **Descripción:** Complementar "Always On" con un servicio de monitoreo externo. Si Replit suspende el "repl" por alguna razón, Uptime Robot lo "despertará".
+*   **Acción para Replit AI:**
+    1.  **Exponer un Endpoint HTTP:** El "Bot Runner" debe incluir un pequeño servidor web (ej. Flask en Python) que exponga un endpoint `/health` o `/ping`.
+    2.  **Configuración de Uptime Robot:** Proporcionar instrucciones detalladas para configurar Uptime Robot para que haga ping a este endpoint cada 5 minutos. Esto garantiza que el "repl" reciba tráfico y se mantenga activo.
 
-### 4.1. Sistema de Comandos Dinámicos
+### 3.3. Arquitecturas Serverless y Contenedores Efímeros (Más Allá de Replit)
 
-*   **Descripción:** El bot debe ser capaz de cargar, actualizar y eliminar comandos sin necesidad de reiniciar el "repl". Esto se logra leyendo las configuraciones de comandos de una fuente persistente (como la Replit Database o una base de datos externa) en tiempo de ejecución.
+Para una persistencia y escalabilidad aún mayores, Replit AI debe ser consciente de soluciones más avanzadas que, aunque no se implementen directamente en Replit, representan el ideal de "de por vida".
+
+*   **Funciones Serverless (AWS Lambda, Google Cloud Functions):** Permiten ejecutar el código del bot en respuesta a eventos (ej. mensajes de Discord) sin gestionar servidores. Son inherentemente 24/7 y escalables. [4]
+*   **Contenedores (Docker, Kubernetes):** Desplegar el bot en un contenedor Docker en plataformas como Google Cloud Run, AWS ECS/EKS, o un VPS. Esto ofrece un control total sobre el entorno y una alta disponibilidad.
+
+**Acción para Replit AI:** Documentar estas opciones como futuras mejoras o alternativas para el usuario que busque la máxima fiabilidad, explicando sus ventajas y desventajas en comparación con Replit.
+
+## 4. Automatización de Builds para F-Droid (CI/CD)
+
+Para que la aplicación móvil sea verdaderamente compatible con F-Droid, el proceso de build debe ser automatizado y reproducible. Esto se logra con un pipeline de Integración Continua/Despliegue Continuo (CI/CD), preferiblemente usando GitHub Actions.
+
+### 4.1. Metadatos de F-Droid [5]
+
+*   **Descripción:** F-Droid utiliza archivos de metadatos (`.yml`) para describir las aplicaciones y sus procesos de construcción. Estos archivos especifican cómo F-Droid debe compilar la aplicación desde el código fuente.
+*   **Acción para Replit AI:**
+    1.  **Creación de `com.jakubtomana.discordbotdesinger.yml`:** Crear un archivo de metadatos YAML en el repositorio `run` (o en un repositorio `fdroiddata` separado) que instruya a F-Droid cómo construir la aplicación Flutter. Esto incluirá la versión de Flutter, los comandos de build (`flutter build apk`), y cualquier parche necesario.
+    2.  **Ejemplo de Metadatos (Conceptual):**
+        ```yaml
+        # /path/to/fdroiddata/metadata/com.jakubtomana.discordbotdesinger.yml
+        Categories: 
+          - Utility
+          - Social
+        License: Apache-2.0 # O la licencia real del proyecto
+        SourceCode: https://github.com/pepitogumball-lang/run
+        IssueTracker: https://github.com/pepitogumball-lang/run/issues
+        AutoUpdateMode: Version
+        UpdateCheckMode: Tags
+        Builds:
+          - versionName: 2.9.1 # Versión actual del APK
+            versionCode: 2205037 # Código de versión actual
+            commit: <hash-del-commit-inicial> # Hash del commit que corresponde a esta versión
+            subdir: com.jakubtomana.discordbotdesinger # Si el proyecto Flutter está en un subdirectorio
+            sudo: 
+              - apt-get update || true
+              - apt-get install -y openjdk-17-jdk # Asegurar JDK para Android
+            build:
+              - flutter pub get
+              - flutter build apk --release
+            output: build/app/outputs/flutter-apk/app-release.apk
+        ```
+
+### 4.2. GitHub Actions para Automatización [6]
+
+*   **Descripción:** Un workflow de GitHub Actions puede automatizar la compilación de la aplicación Flutter y la generación de un APK cada vez que se realice un push a la rama `main`.
+*   **Acción para Replit AI:** Crear un archivo `.github/workflows/build_fdroid_apk.yml` en el repositorio `run`.
+
+    ```yaml
+    # .github/workflows/build_fdroid_apk.yml
+    name: Build F-Droid APK
+
+on: 
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x.x' # Usar una versión estable de Flutter
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Build Android APK for F-Droid
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+    ```
+
+## 5. Sistema de Plugins Dinámicos para el "Bot Runner" (Conceptual)
+
+Para permitir la extensibilidad sin redepliegues constantes, el "Bot Runner" podría implementar un sistema de plugins.
+
+*   **Descripción:** Los usuarios podrían escribir pequeños scripts (ej. Python) que el "Bot Runner" cargaría y ejecutaría dinámicamente, añadiendo nuevas funcionalidades o comandos.
 *   **Implementación:**
-    1.  **API de Configuración:** La aplicación móvil (o un backend intermedio) envía las configuraciones de comandos a una API REST que el bot expone o a una base de datos compartida.
-    2.  **Recarga en Caliente:** El bot debe tener un mecanismo para detectar cambios en la configuración de comandos y recargarlos dinámicamente sin interrumpir su funcionamiento.
-*   **Acción para Replit AI:** Diseñar un esquema para almacenar las configuraciones de comandos (por ejemplo, en JSON) en la Replit Database. Implementar la lógica en el bot para leer estas configuraciones al inicio y monitorear cambios para una recarga dinámica.
+    1.  **Directorio de Plugins:** El "Bot Runner" monitorea un directorio `plugins/`.
+    2.  **Carga Dinámica:** Utiliza la función `importlib` de Python (o equivalente en Node.js) para cargar módulos de forma dinámica.
+    3.  **API de Plugins:** Define una interfaz clara (ej. una clase base abstracta) que los plugins deben implementar para interactuar con el bot.
+*   **Acción para Replit AI:** Documentar este concepto como una mejora avanzada. El "Bot Runner" podría tener un mecanismo para recargar estos plugins sin reiniciar el proceso principal, lo que permitiría a los usuarios añadir o modificar funcionalidades sobre la marcha.
 
-### 4.2. Integración de Inteligencia Artificial (Opcional)
+## 6. Seguridad Avanzada y Manejo de Tokens
 
-Para que el bot sea más "inteligente", se pueden integrar modelos de lenguaje grandes (LLMs) o capacidades de procesamiento de lenguaje natural (NLP).
+La seguridad de las credenciales es primordial.
 
-*   **Descripción:** Permitir que el bot responda a preguntas complejas, genere texto o realice tareas basadas en lenguaje natural.
-*   **Implementación:** Utilizar APIs de LLMs (como OpenAI, Gemini, etc.) o modelos de NLP de código abierto. Replit AI puede integrar estas APIs en la lógica del bot.
-*   **Acción para Replit AI:** Si se desea, integrar una API de LLM en el bot para permitir respuestas más dinámicas y conversacionales. Esto requerirá el manejo seguro de claves API (ver sección 5).
+*   **Variables de Entorno de Replit (Secrets):** Es la forma más segura de almacenar el `DISCORD_BOT_TOKEN` y cualquier otra clave API. [1]
+*   **Principio de Mínimo Privilegio:** El token de Discord debe tener solo los permisos necesarios para las funciones del bot.
+*   **Auditorías de Código:** Aunque Replit AI no realizará auditorías de seguridad, debe recomendar que el código del "Bot Runner" sea revisado periódicamente.
 
-## 5. Seguridad y Manejo de Tokens
+**Acción para Replit AI:** Reconfirmar que el `DISCORD_BOT_TOKEN` se carga exclusivamente desde las variables de entorno de Replit. Proporcionar un recordatorio explícito al usuario sobre la importancia de no exponer estas claves.
 
-El token de Discord del bot es una credencial sensible y debe manejarse con la máxima seguridad.
-
-*   **Variables de Entorno/Secretos de Replit:** **NUNCA** codificar el token de Discord directamente en el código fuente. Replit proporciona una función de "Secrets" para almacenar variables de entorno de forma segura. [1]
-*   **Acción para Replit AI:** Asegurarse de que el token de Discord se almacene como un secreto en Replit y se acceda a él a través de variables de entorno en el código del bot. Proporcionar un ejemplo de cómo el bot debe leer este token.
-
-## 6. Proceso de Reconstrucción y Despliegue para Replit AI
+## 7. Proceso de Reconstrucción y Despliegue para Replit AI (Actualizado)
 
 1.  **Clonar el Repositorio:** Replit AI debe clonar este repositorio.
     ```bash
     git clone https://github.com/pepitogumball-lang/run.git
     cd run
     ```
-2.  **Análisis del Código Flutter:** Replit AI debe analizar el código fuente de Flutter (`src/java`, `src/resources`, etc.) para comprender cómo la aplicación móvil genera o interactúa con la lógica del bot. Es probable que la lógica del bot no esté directamente en los archivos Java/Dex, sino que la aplicación genere configuraciones para un bot externo.
-3.  **Creación del "Repl" del Bot:** Crear un nuevo "repl" en Replit (preferiblemente Python o Node.js, dependiendo de la lógica del bot) que actuará como el servidor del bot.
-4.  **Implementación de la Lógica del Bot:**
-    *   Si la aplicación Flutter genera archivos de configuración, Replit AI debe crear un bot simple (usando `discord.py` o `discord.js`) que lea y ejecute comandos basados en estos archivos.
-    *   Si la aplicación Flutter contiene la lógica del bot en Dart/Flutter, Replit AI deberá extraer y adaptar esa lógica para un entorno de servidor Dart (por ejemplo, usando `shelf` o `Aqueduct`).
-5.  **Configuración de Persistencia:** Implementar "Always On" (si es posible) y/o el monitoreo externo con Uptime Robot.
-6.  **Manejo Seguro de Tokens:** Almacenar el token de Discord como un secreto de Replit.
-7.  **Pruebas:** Realizar pruebas exhaustivas para asegurar que el bot se conecta a Discord, ejecuta comandos y mantiene la persistencia.
+2.  **Análisis de la Aplicación Flutter (Conceptual):** Aunque el código fuente de Flutter no está presente, Replit AI debe entender que la aplicación móvil es la interfaz de diseño. El objetivo es que esta aplicación genere una `bot_config.json` (o similar) que defina el bot.
+3.  **Configuración del "Bot Runner" en Replit:**
+    *   Crear un nuevo "repl" en Replit (preferiblemente Python o Node.js).
+    *   Copiar el `bot_runner.py` (o equivalente) y el `bot_config.json` (ejemplo) a este "repl".
+    *   Configurar el `DISCORD_BOT_TOKEN` como un secreto de Replit.
+    *   Implementar el endpoint `/health` para Uptime Robot.
+    *   Activar "Always On" si es posible.
+4.  **Despliegue y Monitoreo:**
+    *   Ejecutar el "Bot Runner" en el "repl".
+    *   Configurar Uptime Robot para monitorear el endpoint `/health` del "Bot Runner".
+5.  **Automatización F-Droid (Opcional/Futuro):**
+    *   Crear el archivo `com.jakubtomana.discordbotdesinger.yml` con los metadatos de F-Droid.
+    *   Configurar el workflow de GitHub Actions (`.github/workflows/build_fdroid_apk.yml`) para automatizar la construcción de APKs.
+6.  **Pruebas Exhaustivas:** Verificar la conexión del bot, la ejecución de comandos, la persistencia de la configuración y la capacidad de recuperación ante reinicios.
 
-## 7. Referencias
+## 8. Referencias
 
 [1] Replit. (2023, October 6). *Hosting Apps with Always On*. [https://replit.com/blog/alwayson](https://replit.com/blog/alwayson)
 [2] Infosecwriteups. (2023, September 25). *Running Discord Bots 24/7 for Free with Replit and Uptime Robot*. [https://infosecwriteups.com/running-discord-bots-24-7-for-free-with-replit-and-uptime-robot-43caebb0cb60](https://infosecwriteups.com/running-discord-bots-24-7-for-free-with-replit-and-uptime-robot-43caebb0cb60)
 [3] Stack Overflow. (2019, February 16). *Keep Discord Bot online on repl.it - python*. [https://stackoverflow.com/questions/54722596/keep-discord-bot-online-on-repl-it](https://stackoverflow.com/questions/54722596/keep-discord-bot-online-on-repl-it)
+[4] OneUptime. (2026, February 12). *How to Build a Serverless Discord Bot on AWS*. [https://oneuptime.com/blog/post/2026-02-12-build-a-serverless-discord-bot-on-aws/view](https://oneuptime.com/blog/post/2026-02-12-build-a-serverless-discord-bot-on-aws/view)
+[5] F-Droid. (n.d.). *Build Metadata Reference*. [https://f-droid.org/en/docs/Build_Metadata_Reference/](https://f-droid.org/en/docs/Build_Metadata_Reference/)
+[6] DEV Community. (2026, May 14). *How to Publish Your Flutter App on F-Droid*. [https://dev.to/benji377/how-to-publish-your-flutter-app-on-f-droid-3ed5](https://dev.to/benji377/how-to-publish-your-flutter-app-on-f-droid-3ed5)
