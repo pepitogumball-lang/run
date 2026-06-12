@@ -1,0 +1,182 @@
+{
+ "arsc_lib_version": "1.2.5",
+ "package_id": 127,
+ "package_name": "com.jakubtomana.discordbotdesinger",
+ "specs": [
+  {"spec": {"id": 1}},
+  {"spec": {"id": 2}},
+  {"spec": {"id": 3}},
+  {"spec": {
+   "id": 4,
+   "spec_flags": [
+    {
+     "id": 0,
+     "flag": 128
+    },
+    {
+     "id": 3,
+     "flag": 8192
+    }
+   ]
+  }},
+  {"spec": {
+   "id": 5,
+   "spec_flags": [
+    {
+     "id": 48,
+     "flag": 4096
+    },
+    {
+     "id": 50,
+     "flag": 4096
+    },
+    {
+     "id": 51,
+     "flag": 4096
+    },
+    {
+     "id": 53,
+     "flag": 4096
+    },
+    {
+     "id": 54,
+     "flag": 4096
+    },
+    {
+     "id": 55,
+     "flag": 4096
+    },
+    {
+     "id": 56,
+     "flag": 4096
+    }
+   ]
+  }},
+  {"spec": {
+   "id": 6,
+   "spec_flags": [
+    {
+     "id": 0,
+     "flag": 8192
+    },
+    {
+     "id": 1,
+     "flag": 8192
+    },
+    {
+     "id": 2,
+     "flag": 8320
+    },
+    {
+     "id": 3,
+     "flag": 8192
+    },
+    {
+     "id": 4,
+     "flag": 8192
+    },
+    {
+     "id": 16,
+     "flag": 512
+    },
+    {
+     "id": 23,
+     "flag": 10240
+    },
+    {
+     "id": 34,
+     "flag": 2048
+    },
+    {
+     "id": 35,
+     "flag": 2048
+    }
+   ]
+  }},
+  {"spec": {
+   "id": 7,
+   "spec_flags": [
+    {
+     "id": 19,
+     "flag": 4096
+    },
+    {
+     "id": 102,
+     "flag": 4096
+    },
+    {
+     "id": 104,
+     "flag": 4096
+    },
+    {
+     "id": 107,
+     "flag": 4096
+    }
+   ]
+  }},
+  {"spec": {"id": 8}},
+  {"spec": {"id": 9}},
+  {"spec": {"id": 10}},
+  {"spec": {
+   "id": 11,
+   "spec_flags": [
+    {
+     "id": 8,
+     "flag": 4096
+    },
+    {
+     "id": 10,
+     "flag": 4096
+    },
+    {
+     "id": 23,
+     "flag": 1024
+    }
+   ]
+  }},
+  {"spec": {"id": 12}},
+  {"spec": {
+   "id": 13,
+   "spec_flags": [{
+    "id": 0,
+    "flag": 1280
+   }]
+  }},
+  {"spec": {"id": 14}},
+  {"spec": {"id": 15}},
+  {"spec": {
+   "id": 16,
+   "spec_flags": [
+    {
+     "id": 61,
+     "flag": 1024
+    },
+    {
+     "id": 63,
+     "flag": 4096
+    },
+    {
+     "id": 68,
+     "flag": 1024
+    },
+    {
+     "id": 79,
+     "flag": 4096
+    },
+    {
+     "id": 160,
+     "flag": 1024
+    },
+    {
+     "id": 165,
+     "flag": 1024
+    },
+    {
+     "id": 166,
+     "flag": 1024
+    }
+   ]
+  }},
+  {"spec": {"id": 18}}
+ ]
+}

@@ -1,0 +1,39 @@
+package com.pichillilorenzo.flutter_inappwebview_android.credential_database;
+
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase$CursorFactory;
+import android.content.Context;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class CredentialDatabaseHelper extends SQLiteOpenHelper
+{
+    private static final String SQL_CREATE_CREDENTIAL_TABLE = "CREATE TABLE credential (_id INTEGER PRIMARY KEY,username TEXT NOT NULL,password TEXT NOT NULL,protection_space_id INTEGER NOT NULL,UNIQUE(username, password, protection_space_id),FOREIGN KEY (protection_space_id) REFERENCES protection_space (_id) ON DELETE CASCADE);";
+    private static final String SQL_CREATE_PROTECTION_SPACE_TABLE = "CREATE TABLE protection_space (_id INTEGER PRIMARY KEY,host TEXT NOT NULL,protocol TEXT,realm TEXT,port INTEGER,UNIQUE(host, protocol, realm, port));";
+    private static final String SQL_DELETE_CREDENTIAL_TABLE = "DROP TABLE IF EXISTS credential";
+    private static final String SQL_DELETE_PROTECTION_SPACE_TABLE = "DROP TABLE IF EXISTS protection_space";
+    
+    public CredentialDatabaseHelper(final Context context) {
+        super(context, "CredentialDatabase.db", (SQLiteDatabase$CursorFactory)null, 2);
+    }
+    
+    public void clearAllTables(final SQLiteDatabase sqLiteDatabase) {
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS protection_space");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS credential");
+        this.onCreate(sqLiteDatabase);
+    }
+    
+    public void onCreate(final SQLiteDatabase sqLiteDatabase) {
+        sqLiteDatabase.execSQL("CREATE TABLE protection_space (_id INTEGER PRIMARY KEY,host TEXT NOT NULL,protocol TEXT,realm TEXT,port INTEGER,UNIQUE(host, protocol, realm, port));");
+        sqLiteDatabase.execSQL("CREATE TABLE credential (_id INTEGER PRIMARY KEY,username TEXT NOT NULL,password TEXT NOT NULL,protection_space_id INTEGER NOT NULL,UNIQUE(username, password, protection_space_id),FOREIGN KEY (protection_space_id) REFERENCES protection_space (_id) ON DELETE CASCADE);");
+    }
+    
+    public void onDowngrade(final SQLiteDatabase sqLiteDatabase, final int n, final int n2) {
+        this.onUpgrade(sqLiteDatabase, n, n2);
+    }
+    
+    public void onUpgrade(final SQLiteDatabase sqLiteDatabase, final int n, final int n2) {
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS protection_space");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS credential");
+        this.onCreate(sqLiteDatabase);
+    }
+}

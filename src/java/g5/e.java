@@ -1,0 +1,17 @@
+package g5;
+
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Retention;
+
+@Retention(RetentionPolicy.RUNTIME)
+public @interface e {
+    String c() default "";
+    
+    String f() default "";
+    
+    int[] l() default {};
+    
+    String m() default "";
+    
+    int v() default 1;
+}
